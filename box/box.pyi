@@ -1,6 +1,7 @@
 from _typeshed import Incomplete
 from collections.abc import Generator, Mapping
 from os import PathLike
+import re
 from typing import Any, Literal
 
 class Box(dict):
@@ -20,7 +21,7 @@ class Box(dict):
         box_intact_types: tuple | list = ...,
         box_recast: dict | None = ...,
         box_dots: bool = ...,
-        box_dots_exclude: str | None = ...,
+        box_dots_exclude: str | re.Pattern[str] | None = ...,
         box_class: dict | type[Box] | None = ...,
         box_namespace: tuple[str, ...] | Literal[False] = ...,
         **kwargs: Any,
@@ -41,7 +42,7 @@ class Box(dict):
         box_intact_types: tuple | list = ...,
         box_recast: dict | None = ...,
         box_dots: bool = ...,
-        box_dots_exclude: str | None = ...,
+        box_dots_exclude: str | re.Pattern[str] | None = ...,
         box_class: dict | type[Box] | None = ...,
         box_namespace: tuple[str, ...] | Literal[False] = ...,
         **kwargs: Any,

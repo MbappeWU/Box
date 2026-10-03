@@ -4,8 +4,7 @@ Changelog
 Unreleased
 ----------
 
-* Fixing ``box_dots`` membership and explicit-default ``get`` for paths through
-  lists.
+* Fixing compiled Box nested construction with a compiled ``box_dots_exclude`` pattern
 
 Version 7.4.1
 -------------

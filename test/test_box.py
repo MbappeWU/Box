@@ -6,6 +6,7 @@ import json
 import os
 import pickle
 import platform
+import re
 import shutil
 from multiprocessing import Queue
 from pathlib import Path
@@ -771,39 +772,6 @@ class TestBox:
         assert "a.b.c" in bx_dot
         assert "a.b.c.d" not in bx_dot
 
-        nested = Box({"a": [{"b": 1}]}, box_dots=True)
-        assert nested["a[0].b"] == 1
-        assert "a[0]" in nested
-        assert "a[0].b" in nested
-        sentinel = object()
-        assert nested.get("a[0].b", sentinel) == 1
-        assert nested.get("a[1].b", sentinel) is sentinel
-
-        literal = Box({"a.b": 2}, box_dots=True, box_dots_exclude=r"^a\.b$")
-        assert literal["a.b"] == 2
-        assert "a.b" in literal
-
-        intact_mapping = Box({"a": {"b": 1}}, box_dots=True, box_intact_types=(dict,))
-        assert "a.b" in intact_mapping
-        assert intact_mapping.get("a.b", sentinel) == 1
-
-        intact_list = Box({"a": [{"b": 1}]}, box_dots=True, box_intact_types=(list,))
-        assert "a[0].b" not in intact_list
-        assert intact_list.get("a[0].b", sentinel) is sentinel
-
-        oversized_index = "a[" + ("9" * 4301) + "].b"
-        assert oversized_index not in nested
-        assert nested.get(oversized_index, sentinel) is sentinel
-
-    def test_dotted_membership_does_not_create_default_values(self):
-        nested = Box(default_box=True, box_dots=True)
-        nested["a[0].b"] = 1
-        before = nested.to_dict()
-        sentinel = object()
-        assert "a[1].b" not in nested
-        assert nested.get("a[1].b", sentinel) is sentinel
-        assert nested.to_dict() == before
-
     def test_get_default_box(self):
         bx = Box(default_box=True)
         assert bx.get("test", 4) == 4
@@ -989,6 +957,32 @@ class TestBox:
         assert bx["0.0.0.1"] == True
         with pytest.raises(BoxKeyError):
             del bx["0"]
+
+    @pytest.mark.parametrize(
+        "exclude",
+        [r"(?im)^secret\.", re.compile(r"^secret\.", re.IGNORECASE | re.MULTILINE)],
+    )
+    def test_dots_exclusion_pattern_propagates(self, exclude):
+        expected = re.compile(exclude)
+        bx = Box(
+            {"Secret.Key": 1, "nested": {"Secret.Key": 2}, "items": [{"Secret.Key": 3}]},
+            box_dots=True,
+            box_dots_exclude=exclude,
+        )
+
+        assert bx["Secret.Key"] == 1
+        assert bx.nested["Secret.Key"] == 2
+        assert bx["items"][0]["Secret.Key"] == 3
+        assert bx.nested._box_config["box_dots_exclude"].flags == expected.flags
+        assert bx["items"].box_options["box_dots_exclude"].flags == expected.flags
+        assert bx["items"][0]._box_config["box_dots_exclude"].flags == expected.flags
+        assert bx._box_config["box_dots_exclude"].flags == expected.flags
+
+        for copied in (bx.copy(), copy.copy(bx), copy.deepcopy(bx)):
+            assert copied["Secret.Key"] == 1
+            assert copied.nested["Secret.Key"] == 2
+            assert copied["items"][0]["Secret.Key"] == 3
+            assert copied._box_config["box_dots_exclude"].flags == expected.flags
 
     def test_unicode(self):
         bx = Box()

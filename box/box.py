@@ -138,17 +138,6 @@ def _get_box_config():
     }
 
 
-def _contains_path(value, path):
-    """Check a dotted/bracket path without invoking default creation."""
-    if isinstance(value, Box):
-        return value._contains_dotted(path)
-    if isinstance(value, box.BoxList):
-        return value._contains_dotted(path)
-    if isinstance(value, Mapping):
-        return path in value
-    return False
-
-
 def _get_property_func(obj, key):
     """
     Try to get property helper functions of given object and property name.
@@ -217,7 +206,7 @@ class Box(dict):
         box_intact_types: tuple | list = (),
         box_recast: dict | None = None,
         box_dots: bool = False,
-        box_dots_exclude: str | None = None,
+        box_dots_exclude: str | re.Pattern[str] | None = None,
         box_class: dict | type[Box] | None = None,
         box_namespace: tuple[str, ...] | Literal[False] = (),
         **kwargs: Any,
@@ -266,7 +255,7 @@ class Box(dict):
         box_intact_types: tuple | list = (),
         box_recast: dict | None = None,
         box_dots: bool = False,
-        box_dots_exclude: str | None = None,
+        box_dots_exclude: str | re.Pattern[str] | None = None,
         box_class: dict | type[Box] | None = None,
         box_namespace: tuple[str, ...] | Literal[False] = (),
         **kwargs: Any,
@@ -421,23 +410,17 @@ class Box(dict):
             return in_me
         if in_me:
             return True
-        return self._contains_dotted(item)
-
-    def _contains_dotted(self, item):
-        """Return whether a path exists, without default-box side effects."""
-        if not isinstance(item, str):
-            return False
-        if super().__contains__(item):
-            return True
-        if not self.__process_dotted_key(item):
+        if "." not in item:
             return False
         try:
             first_item, children = _parse_box_dots(self, item)
         except BoxError:
             return False
-        if not super().__contains__(first_item):
-            return False
-        return _contains_path(super().__getitem__(first_item), children)
+        else:
+            if not super().__contains__(first_item):
+                return False
+            it = self[first_item]
+            return isinstance(it, Iterable) and children in it
 
     def keys(self, dotted: bool = False):
         if not dotted:

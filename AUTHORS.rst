@@ -5,7 +5,6 @@ reporting, all input is greatly appreciated!
 
 Code contributions:
 
-- WU Leizhi (MbappeWU)
 - Alexandre Decan (AlexandreDecan)
 - dhilipsiva (dhilipsiva)
 - MAA (FooBarQuaxx)
@@ -38,6 +37,7 @@ Code contributions:
 - Jesper Schlegel (jesperschlegel)
 - J vanBemmel (jbemmel)
 - m-janicki
+- WU Leizhi (MbappeWU)
 
 
 Suggestions and bug reporting:
