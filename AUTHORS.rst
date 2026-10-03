@@ -5,6 +5,7 @@ reporting, all input is greatly appreciated!
 
 Code contributions:
 
+- WU Leizhi (MbappeWU)
 - Alexandre Decan (AlexandreDecan)
 - dhilipsiva (dhilipsiva)
 - MAA (FooBarQuaxx)

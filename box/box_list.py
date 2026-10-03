@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import copy
 import re
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from os import PathLike
 from typing import Any
 
@@ -158,6 +158,35 @@ class BoxList(list):
             if not added:
                 keys.append(f"[{idx}]")
         return keys
+
+    def _contains_dotted(self, item) -> bool:
+        """Return whether a bracket path exists without default creation."""
+        if not self.box_options.get("box_dots") or not isinstance(item, str) or not item.startswith("["):
+            return False
+        match = _list_pos_re.match(item)
+        if match is None:
+            return False
+        try:
+            pos = int(match.group()[1:-1])
+        except ValueError:
+            return False
+        if pos >= len(self):
+            return False
+        remainder = item[len(match.group()) :]
+        if not remainder:
+            return True
+        if remainder[0] == ".":
+            remainder = remainder[1:]
+        elif remainder[0] != "[":
+            return False
+        child = self[pos]
+        if isinstance(child, box.Box):
+            return child._contains_dotted(remainder)
+        if isinstance(child, BoxList):
+            return child._contains_dotted(remainder)
+        if isinstance(child, Mapping):
+            return remainder in child
+        return False
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.to_list()})"

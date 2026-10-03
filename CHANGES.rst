@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+* Fixing ``box_dots`` membership and explicit-default ``get`` for paths through
+  lists.
+
 Version 7.4.1
 -------------
 
