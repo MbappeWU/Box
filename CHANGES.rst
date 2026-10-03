@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+* Fixing compiled Box nested construction with a compiled ``box_dots_exclude`` pattern
+
 Version 7.4.1
 -------------
 

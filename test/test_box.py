@@ -6,6 +6,7 @@ import json
 import os
 import pickle
 import platform
+import re
 import shutil
 from multiprocessing import Queue
 from pathlib import Path
@@ -956,6 +957,32 @@ class TestBox:
         assert bx["0.0.0.1"] == True
         with pytest.raises(BoxKeyError):
             del bx["0"]
+
+    @pytest.mark.parametrize(
+        "exclude",
+        [r"(?im)^secret\.", re.compile(r"^secret\.", re.IGNORECASE | re.MULTILINE)],
+    )
+    def test_dots_exclusion_pattern_propagates(self, exclude):
+        expected = re.compile(exclude)
+        bx = Box(
+            {"Secret.Key": 1, "nested": {"Secret.Key": 2}, "items": [{"Secret.Key": 3}]},
+            box_dots=True,
+            box_dots_exclude=exclude,
+        )
+
+        assert bx["Secret.Key"] == 1
+        assert bx.nested["Secret.Key"] == 2
+        assert bx["items"][0]["Secret.Key"] == 3
+        assert bx.nested._box_config["box_dots_exclude"].flags == expected.flags
+        assert bx["items"].box_options["box_dots_exclude"].flags == expected.flags
+        assert bx["items"][0]._box_config["box_dots_exclude"].flags == expected.flags
+        assert bx._box_config["box_dots_exclude"].flags == expected.flags
+
+        for copied in (bx.copy(), copy.copy(bx), copy.deepcopy(bx)):
+            assert copied["Secret.Key"] == 1
+            assert copied.nested["Secret.Key"] == 2
+            assert copied["items"][0]["Secret.Key"] == 3
+            assert copied._box_config["box_dots_exclude"].flags == expected.flags
 
     def test_unicode(self):
         bx = Box()
